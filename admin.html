@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de auditoría — Administrador</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #F0F2F5;
+    --surface: #FFFFFF;
+    --border: #E2E6EC;
+    --text: #1A1D23;
+    --muted: #6B7280;
+    --accent: #1B4FD8;
+    --accent-light: #EEF2FF;
+    --danger: #DC2626;
+    --danger-light: #FEF2F2;
+    --success: #059669;
+    --success-light: #ECFDF5;
+    --warning: #D97706;
+    --warning-light: #FFFBEB;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --sidebar: 260px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar);
+    background: #0F172A;
+    color: #CBD5E1;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 200;
+  }
+  .sidebar-brand {
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .sidebar-brand h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .sidebar-brand p {
+    font-size: 12px;
+    opacity: 0.5;
+    margin-top: 3px;
+  }
+  .sidebar-section {
+    padding: 16px 12px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.4;
+    padding-bottom: 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin: 1px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+    color: #94A3B8;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #E2E8F0; }
+  .nav-item.active { background: var(--accent); color: #fff; }
+  .nav-count {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .nav-item.active .nav-count { background: rgba(255,255,255,0.25); }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .clear-btn {
+    width: 100%;
+    background: rgba(220,38,38,0.15);
+    border: 1px solid rgba(220,38,38,0.3);
+    color: #FCA5A5;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .clear-btn:hover { background: rgba(220,38,38,0.25); }
+
+  /* Main */
+  .main {
+    margin-left: var(--sidebar);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Topbar */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar h2 { font-size: 18px; font-weight: 700; flex: 1; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn {
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: var(--bg); border: 1px solid var(--border); color: var(--text); }
+  .btn-success { background: var(--success); color: #fff; }
+
+  /* Filter bar */
+  .filter-bar {
+    padding: 14px 28px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .filter-chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .filter-chip.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .filter-chip.alta.active { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+  .filter-chip.media.active { background: var(--warning-light); border-color: var(--warning); color: var(--warning); }
+  .filter-chip.baja.active { background: var(--success-light); border-color: var(--success); color: var(--success); }
+  .filter-sep { width: 1px; background: var(--border); height: 24px; }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 0 28px 14px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; line-height: 1; }
+  .stat-card.alta .stat-value { color: var(--danger); }
+  .stat-card.media .stat-value { color: var(--warning); }
+  .stat-card.baja .stat-value { color: var(--success); }
+
+  /* Content */
+  .content { padding: 0 28px 40px; }
+
+  /* Hallazgo cards */
+  .area-section { margin-bottom: 28px; }
+  .area-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  .area-chip {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .area-count { color: var(--muted); font-size: 14px; font-weight: 500; margin-left: auto; }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 14px;
+  }
+
+  .hallazgo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .hallazgo-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .hallazgo-card.sev-alta { border-left: 3px solid var(--danger); }
+  .hallazgo-card.sev-media { border-left: 3px solid var(--warning); }
+  .hallazgo-card.sev-baja { border-left: 3px solid var(--success); }
+
+  .card-photo {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: #F1F5F9;
+    display: block;
+    cursor: zoom-in;
+  }
+  .card-photo-placeholder {
+    width: 100%;
+    height: 100px;
+    background: #F8FAFC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .card-body { padding: 14px 16px; }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .sev-tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .sev-tag.Alta { background: var(--danger-light); color: var(--danger); }
+  .sev-tag.Media { background: var(--warning-light); color: var(--warning); }
+  .sev-tag.Baja { background: var(--success-light); color: var(--success); }
+  .tipo-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .card-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 4px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .card-del {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+  .card-del:hover { color: var(--danger); background: var(--danger-light); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* QR Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+  }
+  .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .modal p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .qr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .qr-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .qr-item canvas, .qr-item img { border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+  .qr-label { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .modal-close {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 24px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .modal-hint { font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+
+  /* Photo lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 600;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 95vw; max-height: 92vh; border-radius: 6px; object-fit: contain; }
+  .lightbox-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    opacity: 0.8;
+    background: rgba(0,0,0,0.4);
+    border: none;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1A1D23;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Import area */
+  #importInput { display: none; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .stats-row { grid-template-columns: repeat(2,1fr); padding: 0 16px 14px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .filter-bar, .content, .topbar { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>🔍 Auditoría</h1>
+      <p>Panel de administración</p>
+    </div>
+
+    <div class="sidebar-section">Áreas</div>
+    <div class="nav-item active" onclick="filterArea('all',this)">
+      <span>📋</span> Todos los hallazgos
+      <span class="nav-count" id="countAll">0</span>
+    </div>
+    <div class="nav-item" onclick="filterArea('A',this)">
+      <span>📦</span> Área A — Bodega
+      <span class="nav-count" id="countA">0</span>
+    </div>
+    <div class="nav-item" onclick="filterArea('B',this)">
+      <span>🚚</span> Área B — Carga
+      <span class="nav-count" id="countB">0</span>
+    </div>
+    <div class="nav-item" onclick="filterArea('C',this)">
+      <span>⚙️</span> Área C — Producción
+      <span class="nav-count" id="countC">0</span>
+    </div>
+    <div class="nav-item" onclick="filterArea('D',this)">
+      <span>🔬</span> Área D — Calidad
+      <span class="nav-count" id="countD">0</span>
+    </div>
+    <div class="nav-item" onclick="filterArea('E',this)">
+      <span>🏢</span> Área E — Oficinas
+      <span class="nav-count" id="countE">0</span>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:12px;">Acciones</div>
+    <div class="nav-item" onclick="openQRModal()">
+      <span>⬛</span> Generar QR por área
+    </div>
+    <div class="nav-item" onclick="exportJSON()">
+      <span>⬇️</span> Exportar datos (JSON)
+    </div>
+    <div class="nav-item" onclick="document.getElementById('importInput').click()">
+      <span>⬆️</span> Importar datos
+    </div>
+    <div class="nav-item" onclick="exportPrint()">
+      <span>🖨️</span> Imprimir reporte
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="clear-btn" onclick="clearAllData()">🗑 Borrar todos los datos</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="topbar">
+      <h2 id="topbarTitle">Todos los hallazgos</h2>
+      <div class="topbar-actions">
+        <span style="font-size:13px;color:var(--muted);" id="lastUpdate"></span>
+        <button class="btn btn-primary" onclick="openQRModal()">⬛ Generar QR</button>
+        <button class="btn btn-ghost" onclick="loadData()">↻ Actualizar</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-label">Total hallazgos</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card alta">
+        <div class="stat-label">🔴 Alta severidad</div>
+        <div class="stat-value" id="statAlta">0</div>
+      </div>
+      <div class="stat-card media">
+        <div class="stat-label">🟡 Media severidad</div>
+        <div class="stat-value" id="statMedia">0</div>
+      </div>
+      <div class="stat-card baja">
+        <div class="stat-label">🟢 Baja severidad</div>
+        <div class="stat-value" id="statBaja">0</div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span style="font-size:13px;font-weight:600;color:var(--muted);">Severidad:</span>
+      <div class="filter-chip active" onclick="filterSev('all',this)">Todas</div>
+      <div class="filter-chip alta" onclick="filterSev('Alta',this)">🔴 Alta</div>
+      <div class="filter-chip media" onclick="filterSev('Media',this)">🟡 Media</div>
+      <div class="filter-chip baja" onclick="filterSev('Baja',this)">🟢 Baja</div>
+    </div>
+
+    <!-- Cards -->
+    <div class="content" id="contentArea"></div>
+
+  </main>
+</div>
+
+<!-- QR MODAL -->
+<div class="modal-overlay" id="qrModal" onclick="if(event.target===this)closeQRModal()">
+  <div class="modal">
+    <h3>⬛ Códigos QR por área</h3>
+    <p>Imprime y coloca cada QR en su área correspondiente. El auditor lo escanea y el hallazgo se registra automáticamente en esa área.</p>
+    <div class="qr-grid" id="qrGrid"></div>
+    <p class="modal-hint">Tip: Haz clic derecho sobre cualquier QR y selecciona "Guardar imagen" para imprimirlo.</p>
+    <button class="modal-close" onclick="closeQRModal()">Cerrar</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="Hallazgo ampliado">
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importInput" accept=".json" onchange="importJSON(this)">
+
+<script>
+// ─── DATA ─────────────────────────────────────────────
+const AREAS = [
+  { code:'A', name:'Bodega principal', icon:'📦' },
+  { code:'B', name:'Zona de carga', icon:'🚚' },
+  { code:'C', name:'Producción', icon:'⚙️' },
+  { code:'D', name:'Control de calidad', icon:'🔬' },
+  { code:'E', name:'Oficinas', icon:'🏢' },
+];
+
+let allHallazgos = [];
+let currentAreaFilter = 'all';
+let currentSevFilter = 'all';
+
+// ─── LOAD ─────────────────────────────────────────────
+function loadData() {
+  allHallazgos = JSON.parse(localStorage.getItem('hallazgos_all') || '[]');
+  // Merge from area-specific keys in case of discrepancy
+  AREAS.forEach(a => {
+    const areaData = JSON.parse(localStorage.getItem('hallazgos_area_' + a.code) || '[]');
+    areaData.forEach(h => {
+      if (!allHallazgos.find(x => x.id === h.id)) allHallazgos.push(h);
+    });
+  });
+  allHallazgos.sort((a,b) => b.id - a.id);
+
+  updateCounts();
+  updateStats();
+  renderCards();
+
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent = 'Actualizado ' + now.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
+}
+
+function updateCounts() {
+  document.getElementById('countAll').textContent = allHallazgos.length;
+  AREAS.forEach(a => {
+    const c = allHallazgos.filter(h => h.area === a.code).length;
+    document.getElementById('count' + a.code).textContent = c;
+  });
+}
+
+function updateStats() {
+  const vis = getFiltered();
+  document.getElementById('statTotal').textContent = vis.length;
+  document.getElementById('statAlta').textContent = vis.filter(h => h.severidad === 'Alta').length;
+  document.getElementById('statMedia').textContent = vis.filter(h => h.severidad === 'Media').length;
+  document.getElementById('statBaja').textContent = vis.filter(h => h.severidad === 'Baja').length;
+}
+
+function getFiltered() {
+  return allHallazgos.filter(h => {
+    const areaOk = currentAreaFilter === 'all' || h.area === currentAreaFilter;
+    const sevOk = currentSevFilter === 'all' || h.severidad === currentSevFilter;
+    return areaOk && sevOk;
+  });
+}
+
+// ─── RENDER ───────────────────────────────────────────
+function renderCards() {
+  const container = document.getElementById('contentArea');
+  const filtered = getFiltered();
+  updateStats();
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>Sin hallazgos registrados</h3>
+        <p>Genera los QR y colócalos en cada área.<br>Los auditores escanean el código y registran hallazgos aquí.</p>
+        <br>
+        <button class="btn btn-primary" onclick="openQRModal()" style="margin:0 auto">⬛ Generar QR por área</button>
+      </div>`;
+    return;
+  }
+
+  // Group by area
+  const areasToShow = currentAreaFilter === 'all'
+    ? AREAS.filter(a => filtered.some(h => h.area === a.code))
+    : AREAS.filter(a => a.code === currentAreaFilter);
+
+  container.innerHTML = areasToShow.map(area => {
+    const items = filtered.filter(h => h.area === area.code);
+    if (!items.length) return '';
+    return `
+      <div class="area-section">
+        <div class="area-title">
+          <span>${area.icon}</span>
+          <span class="area-chip">Área ${area.code}</span>
+          ${area.name}
+          <span class="area-count">${items.length} hallazgo${items.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="cards-grid">
+          ${items.map(h => renderCard(h)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderCard(h) {
+  const fecha = new Date(h.fecha);
+  const fechaStr = fecha.toLocaleDateString('es-MX', {day:'2-digit',month:'short',year:'numeric'}) +
+    ' · ' + fecha.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
+  const tipos = (h.tipos || []).map(t => `<span class="tipo-tag">${t}</span>`).join('');
+  const photoHtml = h.foto
+    ? `<img class="card-photo" src="${h.foto}" alt="Foto del hallazgo" onclick="openLightbox('${h.id}')" loading="lazy">`
+    : `<div class="card-photo-placeholder">📷 Sin foto</div>`;
+
+  return `
+    <div class="hallazgo-card sev-${(h.severidad||'').toLowerCase()}">
+      ${photoHtml}
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="sev-tag ${h.severidad||''}">${h.severidad||'—'}</span>
+          ${tipos}
+        </div>
+        <div class="card-desc">${escHtml(h.descripcion || '—')}</div>
+        ${h.ubicacion ? `<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📍 ${escHtml(h.ubicacion)}</div>` : ''}
+        <div class="card-footer">
+          <span>👤 ${escHtml(h.auditor || 'Sin nombre')}</span>
+          <span>${fechaStr}</span>
+          <button class="card-del" onclick="deleteHallazgo(${h.id})">🗑</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── FILTERS ──────────────────────────────────────────
+function filterArea(area, el) {
+  currentAreaFilter = area;
+  document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  const titles = {'all':'Todos los hallazgos','A':'Área A — Bodega principal','B':'Área B — Zona de carga','C':'Área C — Producción','D':'Área D — Control de calidad','E':'Área E — Oficinas'};
+  document.getElementById('topbarTitle').textContent = titles[area] || area;
+  renderCards();
+}
+
+function filterSev(sev, el) {
+  currentSevFilter = sev;
+  document.querySelectorAll('.filter-chip').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  renderCards();
+}
+
+// ─── DELETE ───────────────────────────────────────────
+function deleteHallazgo(id) {
+  if (!confirm('¿Eliminar este hallazgo?')) return;
+  allHallazgos = allHallazgos.filter(h => h.id !== id);
+  saveAll();
+  updateCounts();
+  renderCards();
+  showToast('Hallazgo eliminado');
+}
+
+function saveAll() {
+  localStorage.setItem('hallazgos_all', JSON.stringify(allHallazgos));
+  AREAS.forEach(a => {
+    localStorage.setItem('hallazgos_area_' + a.code, JSON.stringify(allHallazgos.filter(h => h.area === a.code)));
+  });
+}
+
+function clearAllData() {
+  if (!confirm('¿Borrar TODOS los hallazgos? Esta acción no se puede deshacer.')) return;
+  allHallazgos = [];
+  localStorage.removeItem('hallazgos_all');
+  AREAS.forEach(a => localStorage.removeItem('hallazgos_area_' + a.code));
+  updateCounts();
+  renderCards();
+  showToast('Datos eliminados');
+}
+
+// ─── QR GENERATOR ─────────────────────────────────────
+function openQRModal() {
+  const grid = document.getElementById('qrGrid');
+  grid.innerHTML = '';
+  const baseURL = window.location.href.replace('admin.html','auditor.html');
+
+  AREAS.forEach(a => {
+    const url = baseURL + '?area=' + a.code;
+    const wrap = document.createElement('div');
+    wrap.className = 'qr-item';
+    const qrDiv = document.createElement('div');
+    qrDiv.id = 'qr_' + a.code;
+    const label = document.createElement('div');
+    label.className = 'qr-label';
+    label.textContent = a.icon + ' Área ' + a.code;
+    const urlLabel = document.createElement('div');
+    urlLabel.style.cssText = 'font-size:9px;color:var(--muted);word-break:break-all;max-width:140px;text-align:center;margin-top:2px;';
+    urlLabel.textContent = url;
+    wrap.appendChild(qrDiv);
+    wrap.appendChild(label);
+    wrap.appendChild(urlLabel);
+    grid.appendChild(wrap);
+
+    new QRCode(qrDiv, {
+      text: url,
+      width: 130,
+      height: 130,
+      colorDark: '#0F172A',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+
+  document.getElementById('qrModal').classList.add('open');
+}
+
+function closeQRModal() {
+  document.getElementById('qrModal').classList.remove('open');
+}
+
+// ─── LIGHTBOX ─────────────────────────────────────────
+function openLightbox(id) {
+  const h = allHallazgos.find(x => x.id == id);
+  if (!h || !h.foto) return;
+  document.getElementById('lightboxImg').src = h.foto;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ─── EXPORT / IMPORT ──────────────────────────────────
+function exportJSON() {
+  const data = JSON.stringify(allHallazgos.map(h => ({...h, foto: h.foto ? '[foto_base64]' : null})), null, 2);
+  const fullData = JSON.stringify(allHallazgos, null, 2);
+  const blob = new Blob([fullData], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'auditoria_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('Datos exportados');
+}
+
+function importJSON(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('Formato inválido');
+      data.forEach(h => {
+        if (!allHallazgos.find(x => x.id === h.id)) allHallazgos.push(h);
+      });
+      allHallazgos.sort((a,b) => b.id - a.id);
+      saveAll();
+      updateCounts();
+      renderCards();
+      showToast(data.length + ' hallazgos importados');
+    } catch(err) {
+      showToast('Error al importar: archivo inválido');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function exportPrint() {
+  const filtered = getFiltered();
+  if (!filtered.length) { showToast('No hay hallazgos para imprimir'); return; }
+  const win = window.open('','_blank');
+  const rows = filtered.map(h => {
+    const fecha = new Date(h.fecha).toLocaleString('es-MX');
+    return `<tr>
+      <td>${h.areaIcon||''} Área ${h.area}</td>
+      <td>${h.severidad||'—'}</td>
+      <td>${(h.tipos||[]).join(', ')||'—'}</td>
+      <td>${h.descripcion||'—'}</td>
+      <td>${h.ubicacion||'—'}</td>
+      <td>${h.auditor||'—'}</td>
+      <td>${fecha}</td>
+    </tr>`;
+  }).join('');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte de auditoría</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px}
+  h1{font-size:18px;margin-bottom:4px}p{color:#666;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px 9px;text-align:left}
+  th{background:#f5f5f5;font-weight:700}tr:nth-child(even){background:#fafafa}
+  @media print{button{display:none}}</style></head><body>
+  <h1>Reporte de auditoría</h1>
+  <p>Generado el ${new Date().toLocaleString('es-MX')} · ${filtered.length} hallazgos</p>
+  <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;cursor:pointer">🖨 Imprimir</button>
+  <table><thead><tr><th>Área</th><th>Severidad</th><th>Tipo</th><th>Descripción</th><th>Ubicación</th><th>Auditor</th><th>Fecha</th></tr></thead>
+  <tbody>${rows}</tbody></table></body></html>`);
+  win.document.close();
+}
+
+// ─── TOAST ────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── INIT ─────────────────────────────────────────────
+loadData();
+// Auto-refresh every 30 seconds
+setInterval(loadData, 30000);
+</script>
+</body>
+</html>
