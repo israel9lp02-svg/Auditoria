@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditoría — Panel de Control</title>
+  <style>
+    :root {
+      --bg: #F3F4F6;
+      --surface: #FFFFFF;
+      --border: #E5E7EB;
+      --text: #111827;
+      --muted: #6B7280;
+      --accent: #1B4FD8;
+      --danger: #EF4444;
+      --danger-bg: #FEF2F2;
+      --warning: #F59E0B;
+      --warning-bg: #FFFBEB;
+      --success: #10B981;
+      --success-bg: #ECFDF5;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--border); flex-wrap: wrap; gap: 10px; }
+    .header h1 { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .header-actions { display: flex; gap: 10px; }
+    .btn { background: var(--surface); border: 1px solid var(--border); padding: 8px 16px; border-radius: var(--radius); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); }
+    .btn:hover { background: #f9fafb; }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: #1a44b8; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: transform 0.2s; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    
+    .card-img { width: 100%; height: 200px; object-fit: cover; background: #e5e7eb; border-bottom: 1px solid var(--border); }
+    .card-img.no-img { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; background: #F1F5F9; }
+    
+    .card-body { padding: 16px; }
+    .card-meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
+    
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+    .badge-area { background: #EEF2FF; color: var(--accent); border: 1px solid #C7D2FE; }
+    .badge-sev-Alta { background: var(--danger-bg); color: var(--danger); border: 1px solid #FECACA; }
+    .badge-sev-Media { background: var(--warning-bg); color: var(--warning); border: 1px solid #FDE68A; }
+    .badge-sev-Baja { background: var(--success-bg); color: var(--success); border: 1px solid #A7F3D0; }
+    
+    .card-desc { font-size: 14px; line-height: 1.5; margin-bottom: 12px; color: var(--text); }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .tag { background: var(--bg); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; font-size: 11px; color: var(--muted); }
+    
+    .card-footer { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 12px; flex-wrap: wrap; gap: 4px; }
+    
+    .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 16px; grid-column: 1 / -1; }
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); grid-column: 1 / -1; }
+    .empty .icon { font-size: 48px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>📊 Dashboard de Hallazgos</h1>
+    <div class="header-actions">
+      <a href="auditor.html" class="btn btn-primary">➕ Nuevo hallazgo</a>
+      <button class="btn" onclick="loadData()">🔄 Actualizar</button>
+    </div>
+  </div>
+
+  <div class="grid" id="findingsGrid">
+    <div class="loading">Cargando hallazgos desde Firebase...</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDYvuXFw-a93VWBTbJqdHZ31wcmNaq9Nc0",
+      authDomain: "auditoria-hallazgos.firebaseapp.com",
+      projectId: "auditoria-hallazgos",
+      storageBucket: "auditoria-hallazgos.firebasestorage.app",
+      messagingSenderId: "873542554042",
+      appId: "1:873542554042:web:632954bf11e5deb2c60d83"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.loadData = async function() {
+      const grid = document.getElementById('findingsGrid');
+      grid.innerHTML = '<div class="loading">Cargando hallazgos...</div>';
+
+      try {
+        const q = query(collection(db, 'hallazgos'), orderBy('timestamp', 'desc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          grid.innerHTML = `<div class="empty"><div class="icon">📭</div><p>No hay hallazgos registrados aún.</p><a href="auditor.html" class="btn btn-primary" style="display:inline-block;margin-top:12px;">Registrar el primero</a></div>`;
+          return;
+        }
+
+        grid.innerHTML = '';
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const fecha = data.timestamp ? new Date(data.timestamp).toLocaleString('es-MX', { 
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
+          }) : 'Fecha desconocida';
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          
+          let imgHTML = '';
+          if (data.fotoBase64) {
+            imgHTML = `<img src="${data.fotoBase64}" class="card-img" alt="Evidencia" onerror="this.onerror=null; this.outerHTML='<div class=&quot;card-img no-img&quot;>📷 Imagen corrupta</div>';">`;
+          } else {
+            imgHTML = `<div class="card-img no-img">📷 Sin evidencia fotográfica</div>`;
+          }
+
+          const tiposHTML = (data.tipos || []).map(t => `<span class="tag">${t}</span>`).join('');
+
+          card.innerHTML = `
+            ${imgHTML}
+            <div class="card-body">
+              <div class="card-meta">
+                <span class="badge badge-area" title="${data.areaName || ''}">${data.areaIcon || '📍'} Área ${data.area || '?'}</span>
+                <span class="badge badge-sev-${data.severidad || 'Media'}">${data.severidad || 'Sin severidad'}</span>
+              </div>
+              <p class="card-desc"><strong>Detalle:</strong> ${data.descripcion || 'Sin descripción'}</p>
+              ${data.ubicacion ? `<p class="card-desc" style="font-size: 12px; margin-top: -8px;">📍 ${data.ubicacion}</p>` : ''}
+              <div class="card-tags">${tiposHTML}</div>
+              <div class="card-footer">
+                <span>👤 ${data.auditor || 'Anónimo'}</span>
+                <span>📅 ${fecha}</span>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error("Error cargando datos: ", error);
+        grid.innerHTML = '<div class="loading" style="color: red;">❌ Error de conexión. Verifica la consola. (Quizás falta crear el índice en Firebase)</div>';
+      }
+    };
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>
