@@ -1,126 +1,406 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Auditoría — Inicio</title>
-  <style>
-    :root {
-      --bg: #F3F4F6;
-      --surface: #FFFFFF;
-      --border: #E5E7EB;
-      --text: #111827;
-      --accent: #1B4FD8;
-      --radius: 12px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      max-width: 500px;
-      width: 100%;
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 40px 30px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-      text-align: center;
-    }
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 8px;
-    }
-    .sub {
-      color: #6B7280;
-      font-size: 15px;
-      margin-bottom: 30px;
-    }
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .btn {
-      display: block;
-      padding: 16px;
-      border-radius: var(--radius);
-      font-size: 18px;
-      font-weight: 600;
-      text-decoration: none;
-      background: #EEF2FF;
-      color: var(--accent);
-      border: 1px solid #C7D2FE;
-      transition: all 0.2s;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-    }
-    .btn-primary:hover { background: #1a44b8; }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .badge {
-      background: var(--accent);
-      color: #fff;
-      font-size: 14px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      display: inline-block;
-      margin-top: 20px;
-    }
-    .footer {
-      margin-top: 30px;
-      font-size: 13px;
-      color: #9CA3AF;
-      border-top: 1px solid var(--border);
-      padding-top: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Auditoría — Registro de hallazgo</title>
+<style>
+  :root{--bg:#F7F8FA;--surface:#FFFFFF;--border:#E2E6EC;--text:#1A1D23;--muted:#6B7280;--accent:#1B4FD8;--accent-light:#EEF2FF;--danger:#DC2626;--danger-light:#FEF2F2;--success:#059669;--success-light:#ECFDF5;--warning:#D97706;--warning-light:#FFFBEB;--radius:12px;--radius-sm:8px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px;}
+  .header{background:var(--accent);color:#fff;padding:16px 20px 14px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,0.15);}
+  .header-top{display:flex;align-items:center;justify-content:space-between;}
+  .header h1{font-size:17px;font-weight:600;}
+  .area-badge{background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;}
+  .header-sub{margin-top:4px;font-size:12px;opacity:0.75;}
+  .area-selector{background:var(--surface);margin:16px;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}
+  .area-selector-title{padding:14px 16px;font-size:14px;font-weight:600;border-bottom:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+  .area-btn{display:flex;align-items:center;width:100%;padding:16px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:left;gap:14px;}
+  .area-btn:last-child{border-bottom:none;}
+  .area-btn:active{background:var(--bg);}
+  .area-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .area-btn-name{font-size:15px;font-weight:600;color:var(--text);}
+  .area-btn-desc{font-size:13px;color:var(--muted);margin-top:2px;}
+  .area-arrow{color:var(--muted);font-size:18px;margin-left:auto;}
+  .form-wrap{padding:16px;display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .card-header{padding:13px 16px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+  .photo-zone{background:#F1F5F9;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;}
+  .photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--muted);}
+  .photo-placeholder svg{opacity:0.5;}
+  .photo-placeholder p{font-size:14px;}
+  .photo-placeholder small{font-size:12px;opacity:0.7;}
+  #photoInput{display:none;}
+  #canvasWrap{position:relative;display:none;touch-action:none;}
+  #baseImg{display:block;width:100%;max-height:320px;object-fit:contain;background:#000;}
+  #annotCanvas{position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;touch-action:none;}
+  .annot-bar{display:none;padding:10px 12px;gap:8px;background:#1E2533;align-items:center;flex-wrap:wrap;}
+  .annot-bar.visible{display:flex;}
+  .tool-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;padding:7px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;}
+  .tool-btn.active{background:var(--accent);border-color:var(--accent);}
+  .color-dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);cursor:pointer;flex-shrink:0;}
+  .color-dot.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.5);}
+  .tool-sep{width:1px;background:rgba(255,255,255,0.2);height:24px;margin:0 2px;}
+  .undo-btn{margin-left:auto;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.7);padding:7px 10px;font-size:12px;cursor:pointer;}
+  .photo-actions{display:none;padding:10px 12px;background:#1E2533;gap:8px;align-items:center;}
+  .photo-actions.visible{display:flex;}
+  .retake-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.8);padding:8px 14px;font-size:13px;cursor:pointer;}
+  .photo-tip{font-size:12px;color:rgba(255,255,255,0.5);flex:1;}
+  .field{padding:14px 16px;border-bottom:1px solid var(--border);}
+  .field:last-child{border-bottom:none;}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  .field input[type="text"],.field textarea{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:15px;color:var(--text);background:var(--bg);outline:none;font-family:inherit;-webkit-appearance:none;}
+  .field input:focus,.field textarea:focus{border-color:var(--accent);background:var(--surface);}
+  .field textarea{resize:none;min-height:90px;line-height:1.5;}
+  .severity-opts{display:flex;gap:8px;}
+  .sev-opt{flex:1;padding:10px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--border);text-align:center;cursor:pointer;font-size:13px;font-weight:600;user-select:none;}
+  .sev-opt.alta{color:var(--danger);}
+  .sev-opt.media{color:var(--warning);}
+  .sev-opt.baja{color:var(--success);}
+  .sev-opt.active.alta{background:var(--danger-light);border-color:var(--danger);}
+  .sev-opt.active.media{background:var(--warning-light);border-color:var(--warning);}
+  .sev-opt.active.baja{background:var(--success-light);border-color:var(--success);}
+  .tipo-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .tipo-chip{padding:8px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);user-select:none;}
+  .tipo-chip.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+  .submit-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:17px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .submit-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  #successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:40px 24px;text-align:center;gap:20px;}
+  .success-icon{width:80px;height:80px;background:var(--success-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;}
+  #successScreen h2{font-size:22px;font-weight:700;}
+  #successScreen p{color:var(--muted);font-size:15px;line-height:1.6;}
+  .another-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:14px 32px;font-size:15px;font-weight:600;cursor:pointer;}
+  .counter-badge{background:var(--accent-light);color:var(--accent);border-radius:20px;padding:6px 16px;font-size:14px;font-weight:600;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#1A1D23;color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;font-weight:500;z-index:999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .offline-banner{display:none;background:#D97706;color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:600;}
+  .offline-banner.show{display:block;}
+  .foto-note{font-size:11px;color:rgba(255,255,255,0.5);margin-left:auto;}
+</style>
 </head>
 <body>
-<div class="container">
-  <h1>🔍 Auditoría</h1>
-  <p class="sub">Sistema de registro de hallazgos</p>
-  <div class="menu">
-    <a href="auditor.html" class="btn btn-primary">📸 Nuevo hallazgo</a>
-    <a href="dashboard.html" class="btn">📊 Ver todos</a>
+
+<div class="offline-banner" id="offlineBanner">⚠️ Sin conexión — verifica tu internet antes de enviar</div>
+
+<div class="header">
+  <div class="header-top">
+    <h1>🔍 Registro de hallazgo</h1>
+    <span class="area-badge" id="areaBadge">Seleccionar área</span>
   </div>
-  <div class="badge" id="contador">Cargando...</div>
-  <div class="footer">v1.0 · sin conexión a Storage</div>
+  <div class="header-sub" id="headerSub">Sistema de auditoría</div>
 </div>
 
+<div id="areaSelectorWrap">
+  <div class="area-selector">
+    <div class="area-selector-title">¿En qué área estás auditando?</div>
+    <button class="area-btn" onclick="selectArea('A','Bodega principal','📦')">
+      <span class="area-icon" style="background:#EEF2FF;">📦</span>
+      <span><div class="area-btn-name">Área A</div><div class="area-btn-desc">Bodega principal</div></span>
+      <span class="area-arrow">›</span>
+    </button>
+    <button class="area-btn" onclick="selectArea('B','Zona de carga','🚚')">
+      <span class="area-icon" style="background:#F0FFF4;">🚚</span>
+      <span><div class="area-btn-name">Área B</div><div class="area-btn-desc">Zona de carga</div></span>
+      <span class="area-arrow">›</span>
+    </button>
+    <button class="area-btn" onclick="selectArea('C','Producción','⚙️')">
+      <span class="area-icon" style="background:#FFF7ED;">⚙️</span>
+      <span><div class="area-btn-name">Área C</div><div class="area-btn-desc">Producción</div></span>
+      <span class="area-arrow">›</span>
+    </button>
+    <button class="area-btn" onclick="selectArea('D','Control de calidad','🔬')">
+      <span class="area-icon" style="background:#FEF2F2;">🔬</span>
+      <span><div class="area-btn-name">Área D</div><div class="area-btn-desc">Control de calidad</div></span>
+      <span class="area-arrow">›</span>
+    </button>
+    <button class="area-btn" onclick="selectArea('E','Oficinas','🏢')">
+      <span class="area-icon" style="background:#F0F9FF;">🏢</span>
+      <span><div class="area-btn-name">Área E</div><div class="area-btn-desc">Oficinas</div></span>
+      <span class="area-arrow">›</span>
+    </button>
+  </div>
+</div>
+
+<div id="mainForm" style="display:none;">
+  <div class="form-wrap">
+
+    <div class="card">
+      <div class="card-header">📷 Foto del hallazgo</div>
+      <div class="photo-zone" id="photoZone" onclick="document.getElementById('photoInput').click()">
+        <div class="photo-placeholder" id="photoPlaceholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="14" rx="3"/><circle cx="12" cy="13" r="4"/><path d="M8 6l2-3h4l2 3"/></svg>
+          <p>Toca para tomar foto</p><small>O selecciona de tu galería</small>
+        </div>
+        <div id="canvasWrap">
+          <img id="baseImg" alt="Foto"/>
+          <canvas id="annotCanvas"></canvas>
+        </div>
+      </div>
+      <div class="annot-bar" id="annotBar">
+        <button class="tool-btn active" id="toolArrow" onclick="setTool('arrow')">↗ Flecha</button>
+        <button class="tool-btn" id="toolCircle" onclick="setTool('circle')">○ Círculo</button>
+        <button class="tool-btn" id="toolRect" onclick="setTool('rect')">▭ Recuadro</button>
+        <div class="tool-sep"></div>
+        <div class="color-dot active" style="background:#FF3B30;" onclick="setColor('#FF3B30',this)"></div>
+        <div class="color-dot" style="background:#FFCC00;" onclick="setColor('#FFCC00',this)"></div>
+        <div class="color-dot" style="background:#30D158;" onclick="setColor('#30D158',this)"></div>
+        <div class="color-dot" style="background:#FFFFFF;border-color:#999" onclick="setColor('#FFFFFF',this)"></div>
+        <button class="undo-btn" onclick="undoLast()">↩</button>
+      </div>
+      <div class="photo-actions" id="photoActions">
+        <button class="retake-btn" onclick="document.getElementById('photoInput').click()">📷 Cambiar foto</button>
+        <span class="foto-note">Foto comprimida automáticamente</span>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+    </div>
+
+    <div class="card">
+      <div class="card-header">⭐ Tipo de hallazgo</div>
+      <div class="field">
+        <div class="tipo-grid">
+          <div class="tipo-chip" onclick="toggleTipo(this)">Seguridad</div>
+          <div class="tipo-chip" onclick="toggleTipo(this)">Orden y limpieza</div>
+          <div class="tipo-chip" onclick="toggleTipo(this)">Equipo dañado</div>
+          <div class="tipo-chip" onclick="toggleTipo(this)">Señalización</div>
+          <div class="tipo-chip" onclick="toggleTipo(this)">Procedimiento</div>
+          <div class="tipo-chip" onclick="toggleTipo(this)">Documentación</div>
+          <div class="tipo-chip" onclick="toggleTipo(this)">Infraestructura</div>
+          <div class="tipo-chip" onclick="toggleTipo(this)">Otro</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">⚠️ Severidad</div>
+      <div class="field">
+        <div class="severity-opts">
+          <div class="sev-opt alta" onclick="setSeveridad('Alta',this)">🔴 Alta</div>
+          <div class="sev-opt media" onclick="setSeveridad('Media',this)">🟡 Media</div>
+          <div class="sev-opt baja" onclick="setSeveridad('Baja',this)">🟢 Baja</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">📝 Descripción</div>
+      <div class="field">
+        <textarea id="descripcion" placeholder="Describe qué se observó, dónde exactamente y cuál es el riesgo..."></textarea>
+      </div>
+      <div class="field">
+        <label>Ubicación exacta (opcional)</label>
+        <input type="text" id="ubicacion" placeholder="Ej: Pasillo norte, estante 3">
+      </div>
+      <div class="field">
+        <label>Nombre del auditor</label>
+        <input type="text" id="auditor" placeholder="Tu nombre completo">
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitHallazgo()">Registrar hallazgo</button>
+  </div>
+</div>
+
+<div id="successScreen">
+  <div class="success-icon">✅</div>
+  <h2>Hallazgo registrado</h2>
+  <p>Guardado en la nube en <strong id="successArea"></strong>.</p>
+  <div class="counter-badge" id="counterBadge"></div>
+  <button class="another-btn" onclick="resetForm()">+ Registrar otro hallazgo</button>
+  <a href="index.html" class="another-btn" style="background:#EEF2FF;color:#1B4FD8;margin-top:10px;display:block;text-decoration:none;">🏠 Volver al inicio</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-  import { getFirestore, collection, getCountFromServer } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDYvuXFw-a93VWBTbJqdHZ31wcmNaq9Nc0",
-    authDomain: "auditoria-hallazgos.firebaseapp.com",
-    projectId: "auditoria-hallazgos",
-    storageBucket: "auditoria-hallazgos.firebasestorage.app",
-    messagingSenderId: "873542554042",
-    appId: "1:873542554042:web:632954bf11e5deb2c60d83"
+const firebaseConfig = {
+  apiKey: "AIzaSyDYvuXFw-a93VWBTbJqdHZ31wcmNaq9Nc0",
+  authDomain: "auditoria-hallazgos.firebaseapp.com",
+  projectId: "auditoria-hallazgos",
+  storageBucket: "auditoria-hallazgos.firebasestorage.app",
+  messagingSenderId: "873542554042",
+  appId: "1:873542554042:web:632954bf11e5deb2c60d83"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ─── STATE ─────────────────────────────────────────────
+let currentArea=null, currentAreaName=null, currentAreaIcon=null;
+let photoData=null, selectedSeveridad=null, selectedTipos=[];
+let annotations=[], currentTool='arrow', currentColor='#FF3B30';
+let isDrawing=false, startX, startY, imgNaturalW, imgNaturalH, canvasCtx;
+let areaCount=0;
+
+window.addEventListener('online',  ()=>document.getElementById('offlineBanner').classList.remove('show'));
+window.addEventListener('offline', ()=>document.getElementById('offlineBanner').classList.add('show'));
+
+const areaNames={
+  'A':['Bodega principal','📦'],
+  'B':['Zona de carga','🚚'],
+  'C':['Producción','⚙️'],
+  'D':['Control de calidad','🔬'],
+  'E':['Oficinas','🏢'],
+};
+
+window.onload=function(){
+  const p=new URLSearchParams(window.location.search).get('area');
+  if(p&&areaNames[p.toUpperCase()]){const i=areaNames[p.toUpperCase()];selectArea(p.toUpperCase(),i[0],i[1]);}
+  const s=localStorage.getItem('auditor_name');
+  if(s)document.getElementById('auditor').value=s;
+};
+
+window.selectArea=async function(code,name,icon){
+  currentArea=code;currentAreaName=name;currentAreaIcon=icon;
+  document.getElementById('areaBadge').textContent=icon+' Área '+code;
+  document.getElementById('headerSub').textContent=name;
+  document.getElementById('areaSelectorWrap').style.display='none';
+  document.getElementById('mainForm').style.display='block';
+  try{const q=query(collection(db,'hallazgos'),where('area','==',code));const s=await getDocs(q);areaCount=s.size;}catch(e){areaCount=0;}
+};
+
+window.handlePhoto=function(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img2=new Image();
+    img2.onload=function(){
+      const MAX=800;
+      let w=img2.width,h=img2.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img2,0,0,w,h);
+      photoData=c.toDataURL('image/jpeg',0.70);
+      imgNaturalW=w;imgNaturalH=h;
+      const baseImg=document.getElementById('baseImg');
+      baseImg.src=photoData;
+      baseImg.onload=setupCanvas;
+      document.getElementById('photoPlaceholder').style.display='none';
+      document.getElementById('canvasWrap').style.display='block';
+      document.getElementById('annotBar').classList.add('visible');
+      document.getElementById('photoActions').classList.add('visible');
+      document.getElementById('photoZone').onclick=null;
+      annotations=[];
+    };
+    img2.src=e.target.result;
   };
+  reader.readAsDataURL(file);
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+function setupCanvas(){
+  const img=document.getElementById('baseImg'),canvas=document.getElementById('annotCanvas');
+  setTimeout(()=>{
+    const w=img.offsetWidth,h=img.offsetHeight;
+    canvas.width=w;canvas.height=h;
+    canvas.style.width=w+'px';canvas.style.height=h+'px';
+    canvas.style.top=img.offsetTop+'px';
+    canvasCtx=canvas.getContext('2d');redraw();
+  },100);
+}
 
-  try {
-    const coll = collection(db, 'hallazgos');
-    const snapshot = await getCountFromServer(coll);
-    document.getElementById('contador').textContent = `📋 ${snapshot.data().count} hallazgos registrados`;
-  } catch (e) {
-    document.getElementById('contador').textContent = '📋 Conectando...';
+function getPos(e){
+  const canvas=document.getElementById('annotCanvas'),rect=canvas.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return{x:(t.clientX-rect.left)*(canvas.width/rect.width),y:(t.clientY-rect.top)*(canvas.height/rect.height)};
+}
+
+const canvas=document.getElementById('annotCanvas');
+canvas.addEventListener('mousedown',e=>{isDrawing=true;const p=getPos(e);startX=p.x;startY=p.y;});
+canvas.addEventListener('mousemove',e=>{if(!isDrawing)return;const p=getPos(e);redraw();drawShape(canvasCtx,currentTool,currentColor,startX,startY,p.x,p.y);});
+canvas.addEventListener('mouseup',e=>{if(!isDrawing)return;isDrawing=false;const p=getPos(e);annotations.push({tool:currentTool,color:currentColor,x1:startX,y1:startY,x2:p.x,y2:p.y});redraw();});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();isDrawing=true;const p=getPos(e);startX=p.x;startY=p.y;},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!isDrawing)return;const p=getPos(e);redraw();drawShape(canvasCtx,currentTool,currentColor,startX,startY,p.x,p.y);},{passive:false});
+canvas.addEventListener('touchend',e=>{e.preventDefault();if(!isDrawing)return;isDrawing=false;const t=e.changedTouches[0],rect=canvas.getBoundingClientRect();const p={x:(t.clientX-rect.left)*(canvas.width/rect.width),y:(t.clientY-rect.top)*(canvas.height/rect.height)};annotations.push({tool:currentTool,color:currentColor,x1:startX,y1:startY,x2:p.x,y2:p.y});redraw();},{passive:false});
+
+function drawShape(ctx,tool,color,x1,y1,x2,y2){
+  ctx.strokeStyle=color;ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=3;
+  if(tool==='arrow'){
+    const dx=x2-x1,dy=y2-y1,angle=Math.atan2(dy,dx),headLen=Math.min(28,Math.sqrt(dx*dx+dy*dy)*0.35);
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-headLen*Math.cos(angle-0.4),y2-headLen*Math.sin(angle-0.4));ctx.lineTo(x2-headLen*Math.cos(angle+0.4),y2-headLen*Math.sin(angle+0.4));ctx.closePath();ctx.fillStyle=color;ctx.fill();
+  }else if(tool==='circle'){
+    const rx=Math.abs(x2-x1)/2,ry=Math.abs(y2-y1)/2,cx=(x1+x2)/2,cy=(y1+y2)/2;
+    ctx.beginPath();ctx.ellipse(cx,cy,rx||1,ry||1,0,0,Math.PI*2);ctx.stroke();
+  }else if(tool==='rect'){ctx.beginPath();ctx.strokeRect(x1,y1,x2-x1,y2-y1);}
+  ctx.shadowBlur=0;
+}
+
+function redraw(){if(!canvasCtx)return;canvasCtx.clearRect(0,0,canvas.width,canvas.height);annotations.forEach(a=>drawShape(canvasCtx,a.tool,a.color,a.x1,a.y1,a.x2,a.y2));}
+
+window.undoLast=function(){annotations.pop();redraw();};
+window.setTool=function(t){currentTool=t;document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tool'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active');};
+window.setColor=function(c,el){currentColor=c;document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));el.classList.add('active');};
+window.setSeveridad=function(val,el){selectedSeveridad=val;document.querySelectorAll('.sev-opt').forEach(e=>e.classList.remove('active'));el.classList.add('active');};
+window.toggleTipo=function(el){el.classList.toggle('active');selectedTipos=Array.from(document.querySelectorAll('.tipo-chip.active')).map(e=>e.textContent);};
+
+window.submitHallazgo=async function(){
+  const descripcion=document.getElementById('descripcion').value.trim();
+  const auditorName=document.getElementById('auditor').value.trim();
+  if(!descripcion){showToast('Escribe una descripción del hallazgo');return;}
+  if(!selectedSeveridad){showToast('Selecciona la severidad');return;}
+  if(!currentArea){showToast('Selecciona el área primero');return;}
+
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Guardando en la nube...';
+
+  if(auditorName)localStorage.setItem('auditor_name',auditorName);
+
+  try{
+    let fotoBase64=null;
+    if(photoData){
+      const img=document.getElementById('baseImg'),cvs=document.getElementById('annotCanvas');
+      const out=document.createElement('canvas');
+      out.width=imgNaturalW;out.height=imgNaturalH;
+      const ctx=out.getContext('2d');
+      ctx.drawImage(img,0,0,imgNaturalW,imgNaturalH);
+      const sx=imgNaturalW/(cvs.width||1),sy=imgNaturalH/(cvs.height||1);
+      annotations.forEach(a=>drawShape(ctx,a.tool,a.color,a.x1*sx,a.y1*sy,a.x2*sx,a.y2*sy));
+      fotoBase64=out.toDataURL('image/jpeg',0.70);
+    }
+
+    await addDoc(collection(db,'hallazgos'),{
+      area:currentArea,areaName:currentAreaName,areaIcon:currentAreaIcon,
+      fotoBase64:fotoBase64,
+      tipos:selectedTipos,severidad:selectedSeveridad,
+      descripcion,ubicacion:document.getElementById('ubicacion').value.trim(),
+      auditor:auditorName,fecha:new Date().toISOString(),timestamp:Date.now()
+    });
+
+    areaCount++;
+    document.getElementById('successArea').textContent=currentAreaIcon+' Área '+currentArea+' — '+currentAreaName;
+    document.getElementById('counterBadge').textContent=areaCount+(areaCount===1?' hallazgo registrado':' hallazgos registrados')+' en esta área';
+    document.getElementById('mainForm').style.display='none';
+    document.getElementById('successScreen').style.display='flex';
+  }catch(err){
+    console.error(err);
+    showToast('Error al guardar. Verifica tu conexión a internet.');
   }
+  btn.disabled=false;btn.innerHTML='Registrar hallazgo';
+};
+
+window.resetForm=function(){
+  photoData=null;selectedSeveridad=null;selectedTipos=[];annotations=[];
+  document.getElementById('photoPlaceholder').style.display='flex';
+  document.getElementById('canvasWrap').style.display='none';
+  document.getElementById('annotBar').classList.remove('visible');
+  document.getElementById('photoActions').classList.remove('visible');
+  document.getElementById('photoZone').onclick=()=>document.getElementById('photoInput').click();
+  document.getElementById('descripcion').value='';
+  document.getElementById('ubicacion').value='';
+  document.getElementById('photoInput').value='';
+  document.querySelectorAll('.sev-opt,.tipo-chip').forEach(e=>e.classList.remove('active'));
+  document.getElementById('successScreen').style.display='none';
+  document.getElementById('mainForm').style.display='block';
+  window.scrollTo(0,0);
+};
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
 </body>
 </html>
